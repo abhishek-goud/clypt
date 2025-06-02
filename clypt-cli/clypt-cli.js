@@ -7,8 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk'); 
 
-const program = new Command();
-// const ENDPOINT_URL = "http://localhost:8080/api/v1/clypt/anonymous"; 
+const program = new Command(); 
 const ENDPOINT_URL = "http://localhost:8080/api/v1/clypt/anonymous";
 
 // CLI Metadata
@@ -34,6 +33,7 @@ program
                ...formData.getHeaders(),
             },
          });
+         console.log({response})
 
          const { uniqueCode } = response.data;
          
