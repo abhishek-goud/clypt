@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * The FileHandlerController provides end-points to handle the uploading and retrieval of file data.
@@ -25,10 +26,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AnonymousFileHandlerController {
 	
 	@PostMapping
-	public ResponseEntity<Object> uploadFile() {
+	public ResponseEntity<Object> uploadFile(@RequestParam("files") MultipartFile[] multipartFiles) {
 	    Map<String, Object> response = new HashMap<>();
 	    response.put("message", "File uploaded successfully.");
 	    response.put("timestamp", LocalDateTime.now());
+	    System.out.println("length "+multipartFiles.length);
+	    for(MultipartFile mf: multipartFiles) {
+	    	System.out.println("files via api "+mf);
+	    }
 
 	    return ResponseEntity.status(HttpStatus.SC_CREATED).body(response);
 	}
