@@ -18,6 +18,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
 import com.clypt.clypt_backend.responses.CodeResponse;
+import com.clypt.clypt_backend.services.UrlMappingService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,6 +28,10 @@ public class CloudinaryFileHandler implements FileHandler{
 
 	@Autowired
 	private Cloudinary cloudinary;
+	
+	@Autowired
+	private UrlMappingService urlMappingService;
+	
 	
 
 	
@@ -111,7 +116,9 @@ public class CloudinaryFileHandler implements FileHandler{
 	            fileUrls.add(url);
 	        }
 
-	      
+	        urlMappingService.save(uniqueCode, fileUrls);
+            System.out.println("upload from CloudinaryFileHandler");
+     
 	        System.out.println("upload from CloudinaryFileHandler");
 	        return new CodeResponse(uniqueCode);
 
@@ -120,6 +127,7 @@ public class CloudinaryFileHandler implements FileHandler{
 	        delete(uniqueCode, fileUrls);
 	       
 	    }
+	    
 	    return null;
 	}
 	
