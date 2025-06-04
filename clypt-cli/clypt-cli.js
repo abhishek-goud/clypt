@@ -10,6 +10,9 @@ const chalk = require('chalk');
 const program = new Command(); 
 const ENDPOINT_URL = "http://localhost:8080/api/v1/clypt/anonymous";
 
+
+
+
 // CLI Metadata
 program
    .name('clypt')
@@ -78,13 +81,16 @@ program
          console.log(chalk.yellow(`📥 Decrypting secure payload...`));
          
          response.data.pipe(writer);
-
-         writer.on('finish', () => {
+         
+         writer.on('finish', async () => {
             console.log(chalk.green('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
             console.log(chalk.green('✅ RECOVERY SUCCESSFUL ✅'));
             console.log(chalk.green('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
             
             console.log(chalk.cyan(`📁 Secure package delivered: ${outputPath}`));
+            const res = await axios.get(`${ENDPOINT_URL}/filetype?code=${code}`);
+            const fileType = res.data || 'unknown';
+            console.log(chalk.cyan(`📦 File Extension: ${fileType}`));
             console.log(chalk.gray(`Files have been safely retrieved and are ready for access`));
          });
 
@@ -107,6 +113,7 @@ program
          console.error(chalk.red(`Verify the code and try again`));
       }
    });
+
 
 // Parse CLI arguments
 program.parse(process.argv);

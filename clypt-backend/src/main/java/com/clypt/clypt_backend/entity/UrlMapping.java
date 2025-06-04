@@ -35,7 +35,12 @@ public class UrlMapping {
 	private List<String> urls;
 	
 	@Column(nullable = false)
+	private String fileExtension;
+	
+	@Column(nullable = false)
 	private LocalDateTime expiryDate;
+	
+	
 	
 
 }

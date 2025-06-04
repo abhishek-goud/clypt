@@ -28,4 +28,6 @@ public interface FileHandler {
      * getFiles creates a zip of the files associated with code and returns the path.
      */
     Path getFiles(String uniqueCode);
+    
+    String getFileType(String uniqueCode);
 }

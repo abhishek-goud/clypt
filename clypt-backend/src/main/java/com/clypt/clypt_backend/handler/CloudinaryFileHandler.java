@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
+import com.clypt.clypt_backend.entity.UrlMapping;
 import com.clypt.clypt_backend.responses.CodeResponse;
 import com.clypt.clypt_backend.services.UrlMappingService;
 
@@ -37,100 +38,54 @@ public class CloudinaryFileHandler implements FileHandler{
 	
 	private static final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
 	
-//	@Override
-//	public CodeResponse upload(MultipartFile[] multipartFiles, String folderName) {
-//		// utils needed while uploading the files.
-//		Map<Object, Object> utils = new HashMap<>();
-//		utils.put("folder", folderName);
-//        utils.put("use_filename", true);
-//        utils.put("unique_filename", false);
-//        utils.put("type", "upload");         
-//        utils.put("resource_type", "raw");   
-//        utils.put("access_mode", "public");   
-//        
-//        // list to store the uploaded files urls.
-//        List<String> fileUrls = new ArrayList<>();
-//        String uniqueCode = generateUniqueCode();
-//        
-//        try {
-//        	for(MultipartFile file: multipartFiles) {
-//        		String fileNameWithExtension = file.getOriginalFilename();
-//        		String fileNameWithoutExtension = getFileNameWithoutExtension(fileNameWithExtension);
-//        		utils.put("public_id", fileNameWithoutExtension + uniqueCode);
-//        		
-//        		Map<String, Object> uploadResult = cloudinary
-//        				.uploader()
-//        				.upload(file.getBytes(), utils);
-//        		
-//        		//getting url to access the file
-//        		String url = (String) uploadResult.get("secure_url");
-//        		log.info("File uploaded with name {}", fileNameWithExtension);
-//        		fileUrls.add(url);
-//        		
-//        	}
-//        	
-//        	
-//            System.out.println("upload from CloudinaryFileHandler");
-//            return new CodeResponse(uniqueCode);
-//
-//        }  catch(IOException e) {
-//        	log.error("Deleting due to error while uploading.");
-//        	delete(uniqueCode, fileUrls);
-//        	
-//        }
-//		return null;
-//   
-//	}
-	
 	@Override
 	public CodeResponse upload(MultipartFile[] multipartFiles, String folderName) {
-	    // utils needed while uploading the files.
-	    Map<Object, Object> utils = new HashMap<>();
-	    utils.put("folder", folderName);
-	    utils.put("use_filename", true);
-	    utils.put("unique_filename", false);
-	    utils.put("type", "upload");
-	    utils.put("resource_type", "raw");
-	    utils.put("access_mode", "public");
-
-	    // list to store the uploaded files urls.
-	    List<String> fileUrls = new ArrayList<>();
-	    String uniqueCode = generateUniqueCode();
-
-	    try {
-	        for(MultipartFile file: multipartFiles) {
-	            String fileNameWithExtension = file.getOriginalFilename();
-	            String fileNameWithoutExtension = getFileNameWithoutExtension(fileNameWithExtension);
-	            String extension = getFileExtension(fileNameWithExtension);
-	            
-	            // Include extension in the public_id to preserve it
-	            utils.put("public_id", fileNameWithoutExtension + uniqueCode + extension);
-
-	            Map<String, Object> uploadResult = cloudinary
-	                .uploader()
-	                .upload(file.getBytes(), utils);
-
-	            //getting url to access the file
-	            String url = (String) uploadResult.get("secure_url");
-	            log.info("File uploaded with name {}", fileNameWithExtension);
-	            fileUrls.add(url);
-	        }
-
-	        urlMappingService.save(uniqueCode, fileUrls);
+		// utils needed while uploading the files.
+		Map<Object, Object> utils = new HashMap<>();
+		utils.put("folder", folderName);
+        utils.put("use_filename", true);
+        utils.put("unique_filename", false);
+        utils.put("type", "upload");         
+        utils.put("resource_type", "raw");   
+        utils.put("access_mode", "public");   
+        
+        // list to store the uploaded files urls.
+        List<String> fileUrls = new ArrayList<>();
+        String uniqueCode = generateUniqueCode();
+        String fileExtension = "";
+        
+        try {
+        	for(MultipartFile file: multipartFiles) {
+        		String fileNameWithExtension = file.getOriginalFilename();
+        		String fileNameWithoutExtension = getFileNameWithoutExtension(fileNameWithExtension);
+        		if(fileExtension.length() == 0) fileExtension = getFileExtension(fileNameWithExtension);
+        		utils.put("public_id", fileNameWithoutExtension + uniqueCode);
+        		
+        		Map<String, Object> uploadResult = cloudinary
+        				.uploader()
+        				.upload(file.getBytes(), utils);
+        		
+        		//getting url to access the file
+        		String url = (String) uploadResult.get("secure_url");
+        		log.info("File uploaded with name {}", fileNameWithExtension);
+        		fileUrls.add(url);
+        		
+        	}
+        	
+        	urlMappingService.save(uniqueCode, fileUrls, fileExtension);
             System.out.println("upload from CloudinaryFileHandler");
-     
-	        System.out.println("upload from CloudinaryFileHandler");
-	        return new CodeResponse(uniqueCode);
+            return new CodeResponse(uniqueCode);
 
-	    } catch(IOException e) {
-	        log.error("Deleting due to error while uploading.");
-	        delete(uniqueCode, fileUrls);
-	       
-	    }
-	    
-	    return null;
+        }  catch(IOException e) {
+        	log.error("Deleting due to error while uploading.");
+        	delete(uniqueCode, fileUrls);
+        	
+        }
+		return null;
+   
 	}
 	
+
 	@Override
 	public void delete(String uniqueCode, List<String> fileUrls) {
 		try {
@@ -166,11 +121,88 @@ public class CloudinaryFileHandler implements FileHandler{
 		
 	}
 	
+//	 @Override
+//	  public Path getFiles(String uniqueCode) {
+//	  	System.out.println("getFiles from CloudinaryFileHandler");
+//	      return null;
+//	  }
+
+	
 	 @Override
-	  public Path getFiles(String uniqueCode) {
-	  	System.out.println("getFiles from CloudinaryFileHandler");
-	      return null;
-	  }
+	    public Path getFiles(String uniqueCode) {
+	        UrlMapping urlMapping = urlMappingService.get(uniqueCode);
+	        List<String> fileUrls = urlMapping.getUrls();
+
+	        if (fileUrls == null || fileUrls.isEmpty()) {
+	            throw new RuntimeException("No files found for the provided code: " + uniqueCode);
+	        }
+
+	        try {
+	            Path tempZip = java.nio.file.Files.createTempFile("clypt-", ".zip");
+	            System.out.println("Created ZIP file at: " + tempZip.toAbsolutePath());
+
+	            try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(java.nio.file.Files.newOutputStream(tempZip))) {
+	                for (String fileUrl : fileUrls) {
+	                    try {
+	                        System.out.println("Fetching: " + fileUrl);
+	                        java.net.URL url = new java.net.URL(fileUrl);
+	                        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+	                        conn.setRequestMethod("GET");
+
+	                        int code = conn.getResponseCode();
+	                        System.out.println("HTTP response: " + code);
+
+	                        if (code != 200) {
+	                            System.out.println("Skipping file due to bad response: " + fileUrl);
+	                            continue;
+	                        }
+
+	                        String fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+	                        fileName = java.net.URLDecoder.decode(fileName, "UTF-8");
+	                        System.out.println("File name to write: " + fileName);
+
+	                        try (java.io.InputStream in = conn.getInputStream()) {
+	                            zos.putNextEntry(new java.util.zip.ZipEntry(fileName));
+	                            byte[] buffer = new byte[4096];
+	                            int bytesRead, totalBytes = 0;
+
+	                            while ((bytesRead = in.read(buffer)) != -1) {
+	                                zos.write(buffer, 0, bytesRead);
+	                                totalBytes += bytesRead;
+	                            }
+
+	                            zos.closeEntry();
+	                            System.out.println("Wrote " + totalBytes + " bytes to ZIP entry.");
+	                        }
+
+	                    } catch (Exception e) {
+	                        System.err.println("Failed for URL: " + fileUrl);
+	                        e.printStackTrace();
+	                    }
+	                }
+	            }
+
+	            // Verify if zip has anything
+	            java.io.File zipFile = tempZip.toFile();
+	            System.out.println("ZIP file size: " + zipFile.length());
+	            if (zipFile.length() == 0) {
+	                System.err.println("ZIP is empty!");
+	            }
+
+	            return tempZip;
+
+	        } catch (IOException e) {
+	            throw new RuntimeException("Could not write ZIP", e);
+	        }
+	    }
+	
+	@Override
+	public String getFileType(String uniqueCode) {
+		UrlMapping urlMapping = urlMappingService.get(uniqueCode);
+		return urlMapping.getFileExtension();
+	}
+	
+
 	  
 		
 
@@ -222,7 +254,6 @@ public class CloudinaryFileHandler implements FileHandler{
         }
         System.out.println("getFileNameWithoutExtension from CloudinaryFileHandler");
         return originalFilename;
-    }
-	
+    }	
 	
 }
