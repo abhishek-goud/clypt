@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("api/v1/clypt/anonymous")
+@RequestMapping("api/clypt/anonymous")
 public class AnonymousFileHandlerController {
 	
 	    private final FileHandler fileHandler;

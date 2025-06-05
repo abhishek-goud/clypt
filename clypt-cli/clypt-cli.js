@@ -8,7 +8,7 @@ const path = require('path');
 const chalk = require('chalk'); 
 
 const program = new Command(); 
-const ENDPOINT_URL = "http://localhost:8080/api/v1/clypt/anonymous";
+const ENDPOINT_URL = "http://localhost:8080/api/clypt/anonymous";
 
 
 
