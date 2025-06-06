@@ -15,7 +15,6 @@ import java.util.Map;
  * ProjectConfiguration class is used to provide or inject bean configurations to different autowired attributes.
  * It primarily configures the Cloudinary service using values from the application properties file.
  *
- * @author Abhishek Goud
  */
 @Configuration
 public class ProjectConfiguration {

@@ -7,7 +7,6 @@ import com.clypt.clypt_backend.entity.UrlMapping;
 /**
  * UrlMappingService is the class associated to service the UrlMapping entity.
  *
- * @author Abhishek Goud
  */
 public interface UrlMappingService {
 

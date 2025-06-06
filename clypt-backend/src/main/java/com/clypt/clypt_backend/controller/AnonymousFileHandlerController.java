@@ -33,7 +33,6 @@ import lombok.extern.slf4j.Slf4j;
  * The FileHandlerController provides end-points to handle the uploading and retrieval of file data.
  * The endpoints associated with it are: "api/v1/clypt/anonymous (POST & GET)
  *
- * @author Abhishek Goud
  */
 @Slf4j
 @RestController

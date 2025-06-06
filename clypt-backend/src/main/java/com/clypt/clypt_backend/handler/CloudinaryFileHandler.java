@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,230 +25,216 @@ import com.clypt.clypt_backend.services.UrlMappingService;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@Slf4j
-public class CloudinaryFileHandler implements FileHandler{
+@ConditionalOnProperty(name = "file.handler", havingValue = "cloudinary")
+public class CloudinaryFileHandler implements FileHandler {
 
 	@Autowired
 	private Cloudinary cloudinary;
-	
+
 	@Autowired
 	private UrlMappingService urlMappingService;
-	
-	
 
-	
 	private static final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
-	
+
 	@Override
 	public CodeResponse upload(MultipartFile[] multipartFiles, String folderName) {
 		// utils needed while uploading the files.
 		Map<Object, Object> utils = new HashMap<>();
 		utils.put("folder", folderName);
-        utils.put("use_filename", true);
-        utils.put("unique_filename", false);
-        utils.put("type", "upload");         
-        utils.put("resource_type", "raw");   
-        utils.put("access_mode", "public");   
-        
-        // list to store the uploaded files urls.
-        List<String> fileUrls = new ArrayList<>();
-        String uniqueCode = generateUniqueCode();
-        String fileExtension = "";
-        
-        try {
-        	for(MultipartFile file: multipartFiles) {
-        		String fileNameWithExtension = file.getOriginalFilename();
-        		String fileNameWithoutExtension = getFileNameWithoutExtension(fileNameWithExtension);
-        		if(fileExtension.length() == 0) fileExtension = getFileExtension(fileNameWithExtension);
-        		utils.put("public_id", fileNameWithoutExtension + uniqueCode);
-        		
-        		Map<String, Object> uploadResult = cloudinary
-        				.uploader()
-        				.upload(file.getBytes(), utils);
-        		
-        		//getting url to access the file
-        		String url = (String) uploadResult.get("secure_url");
-        		log.info("File uploaded with name {}", fileNameWithExtension);
-        		fileUrls.add(url);
-        		
-        	}
-        	
-        	urlMappingService.save(uniqueCode, fileUrls, fileExtension);
-            System.out.println("upload from CloudinaryFileHandler");
-            return new CodeResponse(uniqueCode);
+		utils.put("use_filename", true);
+		utils.put("unique_filename", false);
+		utils.put("type", "upload");
+		utils.put("resource_type", "raw");
+		utils.put("access_mode", "public");
 
-        }  catch(IOException e) {
-        	log.error("Deleting due to error while uploading.");
-        	delete(uniqueCode, fileUrls);
-        	
-        }
+		// list to store the uploaded files urls.
+		List<String> fileUrls = new ArrayList<>();
+		String uniqueCode = generateUniqueCode();
+		String fileExtension = "";
+
+		try {
+			for (MultipartFile file : multipartFiles) {
+				String fileNameWithExtension = file.getOriginalFilename();
+				String fileNameWithoutExtension = getFileNameWithoutExtension(fileNameWithExtension);
+				if (fileExtension.length() == 0)
+					fileExtension = getFileExtension(fileNameWithExtension);
+				utils.put("public_id", fileNameWithoutExtension + uniqueCode);
+
+				Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), utils);
+
+				// getting url to access the file
+				String url = (String) uploadResult.get("secure_url");
+				log.info("File uploaded with name {}", fileNameWithExtension);
+				fileUrls.add(url);
+
+			}
+
+			urlMappingService.save(uniqueCode, fileUrls, fileExtension);
+			System.out.println("upload from CloudinaryFileHandler");
+			return new CodeResponse(uniqueCode);
+
+		} catch (IOException e) {
+			log.error("Deleting due to error while uploading.");
+			delete(uniqueCode, fileUrls);
+
+		}
 		return null;
-   
+
 	}
-	
 
 	@Override
 	public void delete(String uniqueCode, List<String> fileUrls) {
 		try {
-			for(String url: fileUrls) {
+			for (String url : fileUrls) {
 				String publicId = extractPublicIdFromUrl(url);
-				
-				Map<Object, Object> result = cloudinary
-						.uploader()
-						.destroy(publicId, ObjectUtils.emptyMap());
-				
-				if(!("ok".equals(result.get("result")))) {
+
+				Map<Object, Object> result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+
+				if (!("ok".equals(result.get("result")))) {
 					throw new Exception("Failed to delete file from Cloudinary: " + url);
 				}
-				 log.info("File with url: {} deleted", url);
-	                System.out.println("delete from CloudinaryFileHandler");
+				log.info("File with url: {} deleted", url);
+				System.out.println("delete from CloudinaryFileHandler");
 			}
-			
-			 try {
-	                // Fetch list of uploaded resources
-	                Map result = cloudinary.api().resources(ObjectUtils.emptyMap());
 
-	                // Print uploaded resources
-	                System.out.println("cloudinary uploads "+result);
-	            } catch (Exception e) {
-	                e.printStackTrace();
-	            }
-	            
-	            System.out.println("delete from ServerFileHandler");
-		} catch(Exception e) {
+			try {
+				// Fetch list of uploaded resources
+				Map result = cloudinary.api().resources(ObjectUtils.emptyMap());
+
+				// Print uploaded resources
+				System.out.println("cloudinary uploads " + result);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			System.out.println("delete from ServerFileHandler");
+		} catch (Exception e) {
 			log.error("\"Failed to delete files from Cloudinary:" + e);
-			
+
 		}
-		
+
 	}
-	
 
-	 @Override
-	    public Path getFiles(String uniqueCode) {
-	        UrlMapping urlMapping = urlMappingService.get(uniqueCode);
-	        List<String> fileUrls = urlMapping.getUrls();
+	@Override
+	public Path getFiles(String uniqueCode) {
+		UrlMapping urlMapping = urlMappingService.get(uniqueCode);
+		List<String> fileUrls = urlMapping.getUrls();
 
-	        if (fileUrls == null || fileUrls.isEmpty()) {
-	            throw new RuntimeException("No files found for the provided code: " + uniqueCode);
-	        }
+		if (fileUrls == null || fileUrls.isEmpty()) {
+			throw new RuntimeException("No files found for the provided code: " + uniqueCode);
+		}
 
-	        try {
-	            Path tempZip = java.nio.file.Files.createTempFile("clypt-", ".zip");
-	            System.out.println("Created ZIP file at: " + tempZip.toAbsolutePath());
+		try {
+			Path tempZip = java.nio.file.Files.createTempFile("clypt-", ".zip");
+			System.out.println("Created ZIP file at: " + tempZip.toAbsolutePath());
 
-	            try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(java.nio.file.Files.newOutputStream(tempZip))) {
-	                for (String fileUrl : fileUrls) {
-	                    try {
-	                        System.out.println("Fetching: " + fileUrl);
-	                        java.net.URL url = new java.net.URL(fileUrl);
-	                        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-	                        conn.setRequestMethod("GET");
+			try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(
+					java.nio.file.Files.newOutputStream(tempZip))) {
+				for (String fileUrl : fileUrls) {
+					try {
+						System.out.println("Fetching: " + fileUrl);
+						java.net.URL url = new java.net.URL(fileUrl);
+						java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+						conn.setRequestMethod("GET");
 
-	                        int code = conn.getResponseCode();
-	                        System.out.println("HTTP response: " + code);
+						int code = conn.getResponseCode();
+						System.out.println("HTTP response: " + code);
 
-	                        if (code != 200) {
-	                            System.out.println("Skipping file due to bad response: " + fileUrl);
-	                            continue;
-	                        }
+						if (code != 200) {
+							System.out.println("Skipping file due to bad response: " + fileUrl);
+							continue;
+						}
 
-	                        String fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-	                        fileName = java.net.URLDecoder.decode(fileName, "UTF-8");
-	                        System.out.println("File name to write: " + fileName);
+						String fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+						fileName = java.net.URLDecoder.decode(fileName, "UTF-8");
+						System.out.println("File name to write: " + fileName);
 
-	                        try (java.io.InputStream in = conn.getInputStream()) {
-	                            zos.putNextEntry(new java.util.zip.ZipEntry(fileName));
-	                            byte[] buffer = new byte[4096];
-	                            int bytesRead, totalBytes = 0;
+						try (java.io.InputStream in = conn.getInputStream()) {
+							zos.putNextEntry(new java.util.zip.ZipEntry(fileName));
+							byte[] buffer = new byte[4096];
+							int bytesRead, totalBytes = 0;
 
-	                            while ((bytesRead = in.read(buffer)) != -1) {
-	                                zos.write(buffer, 0, bytesRead);
-	                                totalBytes += bytesRead;
-	                            }
+							while ((bytesRead = in.read(buffer)) != -1) {
+								zos.write(buffer, 0, bytesRead);
+								totalBytes += bytesRead;
+							}
 
-	                            zos.closeEntry();
-	                            System.out.println("Wrote " + totalBytes + " bytes to ZIP entry.");
-	                        }
+							zos.closeEntry();
+							System.out.println("Wrote " + totalBytes + " bytes to ZIP entry.");
+						}
 
-	                    } catch (Exception e) {
-	                        System.err.println("Failed for URL: " + fileUrl);
-	                        e.printStackTrace();
-	                    }
-	                }
-	            }
+					} catch (Exception e) {
+						System.err.println("Failed for URL: " + fileUrl);
+						e.printStackTrace();
+					}
+				}
+			}
 
-	            // Verify if zip has anything
-	            java.io.File zipFile = tempZip.toFile();
-	            System.out.println("ZIP file size: " + zipFile.length());
-	            if (zipFile.length() == 0) {
-	                System.err.println("ZIP is empty!");
-	            }
+			// Verify if zip has anything
+			java.io.File zipFile = tempZip.toFile();
+			System.out.println("ZIP file size: " + zipFile.length());
+			if (zipFile.length() == 0) {
+				System.err.println("ZIP is empty!");
+			}
 
-	            return tempZip;
+			return tempZip;
 
-	        } catch (IOException e) {
-	            throw new RuntimeException("Could not write ZIP", e);
-	        }
-	    }
-	
+		} catch (IOException e) {
+			throw new RuntimeException("Could not write ZIP", e);
+		}
+	}
+
 	@Override
 	public String getFileType(String uniqueCode) {
 		UrlMapping urlMapping = urlMappingService.get(uniqueCode);
 		return urlMapping.getFileExtension();
 	}
-	
-
-	  
-		
 
 	// Helper method to extract file extension
 	private String getFileExtension(String filename) {
-	    if (filename == null || filename.isEmpty()) {
-	        return "";
-	    }
-	    int lastDotIndex = filename.lastIndexOf('.');
-	    if (lastDotIndex == -1 || lastDotIndex == filename.length() - 1) {
-	        return "";
-	    }
-	    return filename.substring(lastDotIndex); // includes the dot (e.g., ".pdf")
+		if (filename == null || filename.isEmpty()) {
+			return "";
+		}
+		int lastDotIndex = filename.lastIndexOf('.');
+		if (lastDotIndex == -1 || lastDotIndex == filename.length() - 1) {
+			return "";
+		}
+		return filename.substring(lastDotIndex); // includes the dot (e.g., ".pdf")
 	}
 
-	
-	  private String extractPublicIdFromUrl(String secureUrl) {
-	        String[] parts = secureUrl.split("/");
-	        if (parts.length < 2) {
-	            log.error("Invalid Cloudinary URL: " + secureUrl);
-	        }
+	private String extractPublicIdFromUrl(String secureUrl) {
+		String[] parts = secureUrl.split("/");
+		if (parts.length < 2) {
+			log.error("Invalid Cloudinary URL: " + secureUrl);
+		}
 
-	        String publicID = getPublicID(parts);
-	        System.out.println("extractPublicIdFromUrl from CloudinaryFileHandler");
-	        return publicID;
-	    }
-	  
-	  
-	  private String getPublicID(String[] parts) {
-	        String publicIdWithExtension = parts[parts.length - 1];
-	        String folderName = parts[parts.length - 2];
+		String publicID = getPublicID(parts);
+		System.out.println("extractPublicIdFromUrl from CloudinaryFileHandler");
+		return publicID;
+	}
 
-	        int lastDotIndex = publicIdWithExtension.lastIndexOf('.');
-	        String publicIdWithOutExtension = (lastDotIndex == -1) ? publicIdWithExtension : publicIdWithExtension.substring(0, lastDotIndex);
-	        System.out.println("getPublicID from CloudinaryFileHandler");
-	        return folderName + "/" + publicIdWithOutExtension;
-	    }
-	
-	
+	private String getPublicID(String[] parts) {
+		String publicIdWithExtension = parts[parts.length - 1];
+		String folderName = parts[parts.length - 2];
+
+		int lastDotIndex = publicIdWithExtension.lastIndexOf('.');
+		String publicIdWithOutExtension = (lastDotIndex == -1) ? publicIdWithExtension
+				: publicIdWithExtension.substring(0, lastDotIndex);
+		System.out.println("getPublicID from CloudinaryFileHandler");
+		return folderName + "/" + publicIdWithOutExtension;
+	}
+
 	private String generateUniqueCode() {
 		System.out.println("generateUniqueCode from CloudinaryFileHandler");
-        return UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+		return UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 	}
-	
+
 	private String getFileNameWithoutExtension(String originalFilename) {
-        if (originalFilename != null && originalFilename.contains(".")) {
-            originalFilename = originalFilename
-                    .substring(0, originalFilename.lastIndexOf('.'));
-        }
-        System.out.println("getFileNameWithoutExtension from CloudinaryFileHandler");
-        return originalFilename;
-    }	
-	
+		if (originalFilename != null && originalFilename.contains(".")) {
+			originalFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
+		}
+		System.out.println("getFileNameWithoutExtension from CloudinaryFileHandler");
+		return originalFilename;
+	}
+
 }

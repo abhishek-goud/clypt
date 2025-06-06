@@ -10,7 +10,6 @@ import java.nio.file.Path;
 /**
  * FileHandler handles the uploading, deleting and the retrieval of files from the cloud.
  *
- * @author Abhishek Goud
  */
 public interface FileHandler {
 
