@@ -121,13 +121,7 @@ public class CloudinaryFileHandler implements FileHandler{
 		
 	}
 	
-//	 @Override
-//	  public Path getFiles(String uniqueCode) {
-//	  	System.out.println("getFiles from CloudinaryFileHandler");
-//	      return null;
-//	  }
 
-	
 	 @Override
 	    public Path getFiles(String uniqueCode) {
 	        UrlMapping urlMapping = urlMappingService.get(uniqueCode);
