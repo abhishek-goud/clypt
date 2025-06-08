@@ -1,5 +1,6 @@
 package com.clypt.clypt_backend.handler;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
+import com.clypt.clypt_backend.io.Delete;
 import com.clypt.clypt_backend.io.Upload;
 import com.clypt.clypt_backend.responses.CodeResponse;
 import com.clypt.clypt_backend.services.UrlMappingService;
@@ -27,7 +29,10 @@ public class ServerFileHandler implements FileHandler {
 	private String BASE_DIRECTORY;
 
 	@Autowired
-	private Upload uploader;
+	private Upload uploadService;
+	
+	@Autowired
+	private Delete deleteService;
 
 	@Autowired
 	private UrlMappingService urlMappingService;
@@ -43,8 +48,8 @@ public class ServerFileHandler implements FileHandler {
 		try {
 			// create directories for the new files.
 			Files.createDirectories(folderPath);
-			fileUrls = uploader.uploadFiles(multipartFiles, folderPath, uniqueCode);
-			String fileExtension = uploader.fileExtension;
+			fileUrls = uploadService.uploadFiles(multipartFiles, folderPath, uniqueCode);
+			String fileExtension = uploadService.fileExtension;
 
 			// save file URLs with the unique code.
 			urlMappingService.save(uniqueCode, fileUrls, fileExtension);
@@ -60,7 +65,20 @@ public class ServerFileHandler implements FileHandler {
 
 	@Override
 	public void delete(String uniqueCode, List<String> fileUrls) {
-		// TODO Auto-generated method stub
+		try {
+			deleteService.deleteFiles(fileUrls);
+			
+			// delete the code directory.
+			Path codePath = Paths.get(BASE_DIRECTORY, "anonymous", uniqueCode);
+			Files.deleteIfExists(codePath);
+			
+			//delete zip file
+			Path zipFilePath = Paths.get(BASE_DIRECTORY, uniqueCode + ".zip");
+			Files.deleteIfExists(zipFilePath);
+			
+		} catch(Exception e) {
+			throw new RuntimeException("Failed to delete files for code: "+ uniqueCode);
+		}
 
 	}
 
