@@ -17,9 +17,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
 import com.clypt.clypt_backend.io.Delete;
+import com.clypt.clypt_backend.io.EncryptionUpload;
 import com.clypt.clypt_backend.io.Upload;
 import com.clypt.clypt_backend.responses.CodeResponse;
 import com.clypt.clypt_backend.services.UrlMappingService;
+import com.clypt.clypt_backend.utils.EncryptionUtil;
 
 @Service
 @ConditionalOnProperty(name = "file.handler", havingValue = "server")
@@ -28,9 +30,12 @@ public class ServerFileHandler implements FileHandler {
 	@Value("${base.directory}")
 	private String BASE_DIRECTORY;
 
+//	@Autowired
+//	private Upload uploadService;
+
 	@Autowired
-	private Upload uploadService;
-	
+	private EncryptionUpload uploadService;
+
 	@Autowired
 	private Delete deleteService;
 
@@ -43,13 +48,17 @@ public class ServerFileHandler implements FileHandler {
 	public CodeResponse upload(MultipartFile[] multipartFiles, String folderName) {
 		List<String> fileUrls;
 		String uniqueCode = generateUniqueCode();
+
 		Path folderPath = Paths.get(BASE_DIRECTORY, folderName, uniqueCode);
 
 		try {
 			// create directories for the new files.
+
 			Files.createDirectories(folderPath);
+
 			fileUrls = uploadService.uploadFiles(multipartFiles, folderPath, uniqueCode);
-			String fileExtension = uploadService.fileExtension;
+
+			String fileExtension = uploadService.getFileType();
 
 			// save file URLs with the unique code.
 			urlMappingService.save(uniqueCode, fileUrls, fileExtension);
@@ -67,17 +76,13 @@ public class ServerFileHandler implements FileHandler {
 	public void delete(String uniqueCode, List<String> fileUrls) {
 		try {
 			deleteService.deleteFiles(fileUrls);
-			
+
 			// delete the code directory.
 			Path codePath = Paths.get(BASE_DIRECTORY, "anonymous", uniqueCode);
 			Files.deleteIfExists(codePath);
-			
-			//delete zip file
-			Path zipFilePath = Paths.get(BASE_DIRECTORY, uniqueCode + ".zip");
-			Files.deleteIfExists(zipFilePath);
-			
-		} catch(Exception e) {
-			throw new RuntimeException("Failed to delete files for code: "+ uniqueCode);
+
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to delete files for code: " + uniqueCode);
 		}
 
 	}

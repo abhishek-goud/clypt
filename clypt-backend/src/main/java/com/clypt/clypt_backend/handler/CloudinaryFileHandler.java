@@ -1,7 +1,14 @@
 package com.clypt.clypt_backend.handler;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Files;
+import java.io.InputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -125,16 +132,16 @@ public class CloudinaryFileHandler implements FileHandler {
 		}
 
 		try {
-			Path tempZip = java.nio.file.Files.createTempFile("clypt-", ".zip");
+			Path tempZip = Files.createTempFile("clypt-", ".zip");
 			System.out.println("Created ZIP file at: " + tempZip.toAbsolutePath());
 
-			try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(
-					java.nio.file.Files.newOutputStream(tempZip))) {
+			try (ZipOutputStream zos = new ZipOutputStream(
+					Files.newOutputStream(tempZip))) {
 				for (String fileUrl : fileUrls) {
 					try {
 						System.out.println("Fetching: " + fileUrl);
-						java.net.URL url = new java.net.URL(fileUrl);
-						java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+						URL url = new URL(fileUrl);
+						HttpURLConnection conn = (HttpURLConnection)url.openConnection();
 						conn.setRequestMethod("GET");
 
 						int code = conn.getResponseCode();
@@ -149,8 +156,8 @@ public class CloudinaryFileHandler implements FileHandler {
 						fileName = java.net.URLDecoder.decode(fileName, "UTF-8");
 						System.out.println("File name to write: " + fileName);
 
-						try (java.io.InputStream in = conn.getInputStream()) {
-							zos.putNextEntry(new java.util.zip.ZipEntry(fileName));
+						try (InputStream in = conn.getInputStream()) {
+							zos.putNextEntry(new ZipEntry(fileName));
 							byte[] buffer = new byte[4096];
 							int bytesRead, totalBytes = 0;
 
@@ -171,7 +178,7 @@ public class CloudinaryFileHandler implements FileHandler {
 			}
 
 			// Verify if zip has anything
-			java.io.File zipFile = tempZip.toFile();
+			File zipFile = tempZip.toFile();
 			System.out.println("ZIP file size: " + zipFile.length());
 			if (zipFile.length() == 0) {
 				System.err.println("ZIP is empty!");

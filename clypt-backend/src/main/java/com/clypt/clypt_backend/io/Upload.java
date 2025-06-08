@@ -17,31 +17,27 @@ import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * SequentialStrategy stores the files one by one without encryption or
- * parallelism.
- *
- */
+
 
 @Component
 public class Upload {
 
 	private static final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
 
-	public String fileExtension = "";
+	private String fileType = "";
 
 	public List<String> uploadFiles(MultipartFile[] files, Path folderPath, String uniqueCode){
 		List<String> fileUrls = new ArrayList<>();
-		String fileExtension = "";
 		
 		for(MultipartFile file: files) {
 			try {
 				String fileNameWithExtension = file.getOriginalFilename();
-				if(fileExtension.length() == 0) fileExtension = getFileExtension(fileNameWithExtension);;
 						
 				if(fileNameWithExtension == null) {
 					throw new RuntimeException("Received a file without a valid name in the upload request.");
 				}
+				if(fileType.length() == 0) fileType = getFileExtension(fileNameWithExtension);
+				
 				Path filePath = folderPath.resolve(fileNameWithExtension);
 				Files.write(filePath, file.getBytes());
 				fileUrls.add(filePath.toString());
@@ -65,6 +61,10 @@ public class Upload {
 			return "";
 		}
 		return filename.substring(lastDotIndex); // includes the dot (e.g., ".pdf")
+	}
+	
+	public String getFileType() {
+		return fileType;
 	}
 
 }
