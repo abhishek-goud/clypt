@@ -15,14 +15,16 @@ const ENDPOINT_URL = "http://localhost:8080/api/clypt/anonymous";
 
 // CLI Metadata
 program
-   .command('upload <file>')
-   .description('Upload a file using Clypt and retrieve unique code')
-   .action(async (file) => {
+   .command('upload <files...>')
+   .description('Upload multiple files using Clypt and retrieve unique code')
+   .action(async (files) => {
       console.log(chalk.magenta(`[CLYPT] ${new Date().toISOString()}`));
-      console.log(chalk.white(`→ Processing: ${file}`));
+      console.log(chalk.white(`→ Processing files: ${files.join(', ')}`));
 
       const formData = new FormData();
-      formData.append('files', fs.createReadStream(file));
+      files.forEach((file) => {
+         formData.append('files', fs.createReadStream(file));
+      });
 
       try {
          const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
