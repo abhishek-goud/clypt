@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
 import com.clypt.clypt_backend.io.Delete;
 import com.clypt.clypt_backend.io.EncryptionUpload;
+import com.clypt.clypt_backend.io.ParallelUpload;
 import com.clypt.clypt_backend.io.Upload;
 import com.clypt.clypt_backend.responses.CodeResponse;
 import com.clypt.clypt_backend.services.UrlMappingService;
@@ -33,8 +34,11 @@ public class ServerFileHandler implements FileHandler {
 //	@Autowired
 //	private Upload uploadService;
 
+//	@Autowired
+//	private EncryptionUpload uploadService;
+	
 	@Autowired
-	private EncryptionUpload uploadService;
+	private ParallelUpload uploadService;
 
 	@Autowired
 	private Delete deleteService;

@@ -15,105 +15,108 @@ const ENDPOINT_URL = "http://localhost:8080/api/clypt/anonymous";
 
 // CLI Metadata
 program
-   .name('clypt')
-   .description('CLI for Clypt application!')
-   .version('1.1.0');
-
-// Upload Command
-program
    .command('upload <file>')
    .description('Upload a file using Clypt and retrieve unique code')
    .action(async (file) => {
-      console.log(chalk.blue("🚀 CLYPT INITIATED"));
-      console.log(chalk.yellow(`📦 Preparing file for secure transmission: ${file}`));
+      console.log(chalk.magenta(`[CLYPT] ${new Date().toISOString()}`));
+      console.log(chalk.white(`→ Processing: ${file}`));
 
       const formData = new FormData();
       formData.append('files', fs.createReadStream(file));
 
       try {
+         const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+         let i = 0;
+         const uploadInterval = setInterval(() => {
+            process.stdout.write(`\r${chalk.hex('#3b82f6')(spinner[i++ % spinner.length])} Uploading`);
+         }, 80);
+         
          const response = await axios.post(ENDPOINT_URL, formData, {
             headers: {
                ...formData.getHeaders(),
             },
          });
-         console.log({response})
+
+         clearInterval(uploadInterval);
+         process.stdout.write('\r \r');
 
          const { uniqueCode } = response.data;
          
-         console.log(chalk.green('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
-         console.log(chalk.green('✨ TRANSMISSION COMPLETE ✨'));
-         console.log(chalk.green('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
-         
-         console.log(chalk.cyan(`🔐 SECRET ACCESS CODE: ${uniqueCode}`));
-         console.log(chalk.gray(`Share this code with your intended recipient only`));
-         console.log(chalk.gray(`Files are encrypted and will be available for 24 hours`));
+         console.log(chalk.green(`✓ Upload completed successfully`));
+         console.log(chalk.white(`Code: `) + chalk.bold.cyan(uniqueCode));
+         console.log(chalk.dim(`Expires: 24 hours`));
 
       } catch (error) {
-         console.log(chalk.red('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
-         console.log(chalk.red('❌ TRANSMISSION FAILED ❌'));
-         console.log(chalk.red('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
-         
-         console.error(chalk.red(`🔥 Error: ${error.message}`));
-         console.error(chalk.red(`Check your network connection and try again`));
+         console.log(chalk.red(`✗ Upload failed: ${error.message}`));
+         console.log(chalk.dim(`Check network connection`));
       }
-
-      console.log("uploaded filessss",{formData})
    });
+
+
 
 // Download Command
 program
    .command('download <code>')
    .description('Download files associated with a code as a ZIP')
    .action(async (code) => {
-      console.log(chalk.blue("🔍 CLYPT RECOVERY PROTOCOL"));
-      console.log(chalk.yellow(`🔑 Validating access code: ${code}...`));
+      console.log(chalk.magenta(`[CLYPT] ${new Date().toISOString()}`));
+      console.log(chalk.white(`→ Retrieving: ${code}`));
 
       try {
+         const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+         let i = 0;
+         const validationInterval = setInterval(() => {
+            process.stdout.write(`\r${chalk.hex('#3b82f6')(spinner[i++ % spinner.length])} Validating access code`);
+         }, 80);
+
          const response = await axios({
             url: `${ENDPOINT_URL}?code=${code}`,
             method: 'GET',
             responseType: 'stream',
          });
 
+         clearInterval(validationInterval);
+         process.stdout.write('\r \r');
+
          const outputPath = path.resolve(__dirname, `${code}.zip`);
          const writer = fs.createWriteStream(outputPath);
 
-         console.log(chalk.yellow(`📥 Decrypting secure payload...`));
+         let j = 0;
+         const downloadInterval = setInterval(() => {
+            process.stdout.write(`\r${chalk.hex('#3b82f6')(spinner[j++ % spinner.length])} Downloading package...`);
+         }, 80);
          
          response.data.pipe(writer);
          
          writer.on('finish', async () => {
-            console.log(chalk.green('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
-            console.log(chalk.green('✅ RECOVERY SUCCESSFUL ✅'));
-            console.log(chalk.green('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
+            clearInterval(downloadInterval);
+            process.stdout.write('\r \r');
             
-            console.log(chalk.cyan(`📁 Secure package delivered: ${outputPath}`));
-            const res = await axios.get(`${ENDPOINT_URL}/filetype?code=${code}`);
-            const fileType = res.data || 'unknown';
-            console.log(chalk.cyan(`📦 File Extension: ${fileType}`));
-            console.log(chalk.gray(`Files have been safely retrieved and are ready for access`));
+            console.log(chalk.green(`✓ Download completed successfully`));
+            console.log(chalk.white(`Location: `) + chalk.bold.cyan(outputPath));
+            
+            try {
+               const res = await axios.get(`${ENDPOINT_URL}/filetype?code=${code}`);
+               const fileType = res.data || 'unknown';
+               console.log(chalk.white(`Type: `) + chalk.cyan(fileType));
+            } catch (e) {
+               console.log(chalk.dim('Type: unable to determine'));
+            }
+            
+            console.log(chalk.dim(`Status: Ready for extraction`));
          });
 
          writer.on('error', (error) => {
-            console.log(chalk.red('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
-            console.log(chalk.red('❌ RECOVERY INTERRUPTED ❌'));
-            console.log(chalk.red('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
-            
-            console.error(chalk.red(`💥 Download Error: ${error.message}`));
-            console.error(chalk.red(`Check your disk space and write permissions`));
+            clearInterval(downloadInterval);
+            process.stdout.write('\r \r');
+            console.log(chalk.red(`✗ Download interrupted: ${error.message}`));
          });
 
       } catch (error) {
-         console.log(chalk.red('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
-         console.log(chalk.red('❌ RECOVERY FAILED ❌'));
-         console.log(chalk.red('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
-         
-         console.error(chalk.red(`🔥 Error: ${error.message}`));
-         console.error(chalk.red(`The code may be invalid or expired`));
-         console.error(chalk.red(`Verify the code and try again`));
+         console.log(chalk.red(`✗ Download failed: ${error.message}`));
+         console.log(chalk.dim(`Troubleshoot: Verify code validity and network connection`));
       }
    });
-
 
 // Parse CLI arguments
 program.parse(process.argv);

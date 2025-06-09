@@ -18,53 +18,54 @@ public class EncryptionUpload {
 	private static final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
 
 	private String fileType = "";
-	
-	public List<String> uploadFiles(MultipartFile multiPartFiles[], Path folderPath, String uniqueCode){
+
+	public List<String> uploadFiles(MultipartFile files[], Path folderPath, String uniqueCode) {
 		List<String> fileUrls = new ArrayList<>();
-		
+
 		try {
 			byte[] secretKey = EncryptionUtil.generateKeyFromUniqueCode(uniqueCode);
-			
-			for(MultipartFile file: multiPartFiles) {
+
+			for (MultipartFile file : files) {
 				byte fileBytes[] = file.getBytes();
 				byte encryptedBytes[] = EncryptionUtil.encrypt(fileBytes, secretKey);
-				
+
 				String fileNameWithExtension = file.getOriginalFilename();
 				if (fileNameWithExtension == null) {
-                    throw new RuntimeException("Received a file without a valid name in the upload request.");
-                }
+					throw new RuntimeException("Received a file without a valid name in the upload request.");
+				}
 
-				if(fileType.length() == 0) fileType = getFileExtension(fileNameWithExtension);
-				
+				if (fileType.length() == 0)
+					fileType = getFileExtension(fileNameWithExtension);
+
 				Path filePath = folderPath.resolve(fileNameWithExtension);
 				Files.write(filePath, encryptedBytes);
 				fileUrls.add(filePath.toString());
-				
-			}
-			
-		} catch(Exception e) {
-			log.error("{} error occurred", e.getClass());
-            log.error("message: {}", e.getMessage());
 
-            throw new RuntimeException("Failed to upload the files");
+			}
+
+		} catch (Exception e) {
+			log.error("{} error occurred", e.getClass());
+			log.error("message: {}", e.getMessage());
+
+			throw new RuntimeException("Failed to upload the files");
 		}
-		
+
 		return fileUrls;
 	}
-	
+
 	// Helper method to extract file extension
-		public String getFileExtension(String filename) {
-			if (filename == null || filename.isEmpty()) {
-				return "";
-			}
-			int lastDotIndex = filename.lastIndexOf('.');
-			if (lastDotIndex == -1 || lastDotIndex == filename.length() - 1) {
-				return "";
-			}
-			return filename.substring(lastDotIndex); // includes the dot (e.g., ".pdf")
+	public String getFileExtension(String filename) {
+		if (filename == null || filename.isEmpty()) {
+			return "";
 		}
-		
-		public String getFileType() {
-			return fileType;
+		int lastDotIndex = filename.lastIndexOf('.');
+		if (lastDotIndex == -1 || lastDotIndex == filename.length() - 1) {
+			return "";
 		}
+		return filename.substring(lastDotIndex); // includes the dot (e.g., ".pdf")
+	}
+
+	public String getFileType() {
+		return fileType;
+	}
 }

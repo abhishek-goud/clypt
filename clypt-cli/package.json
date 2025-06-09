@@ -6,6 +6,9 @@
   "author": "Abhishek Goud",
   "type": "commonjs",
   "main": "clypt-cli.js",
+  "bin": {
+    "clypt": "./clypt-cli.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
