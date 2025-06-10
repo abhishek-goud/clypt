@@ -16,10 +16,19 @@ public class UploadStrategySelector {
 	private SequentialStrategy sequentialStrategy;
 
 	@Autowired
+	private ParallelStrategy parallelStrategy;
+
+	@Autowired
 	private SequentialEncryptionStrategy sequentialEncryptionStrategy;
 
-	public UploadStrategy selectStrategy(int numberOfFiles) {
-		return encryptionEnabled ? sequentialEncryptionStrategy : sequentialStrategy;
-	}
+	@Autowired
+	private ParallelEncryptionStrategy parallelEncryptionStrategy;
 
+	public UploadStrategy selectStrategy(int numberOfFiles) {
+		if (numberOfFiles > parallelStrategyThreshold) {
+			return encryptionEnabled ? parallelEncryptionStrategy : parallelStrategy;
+		} else {
+			return encryptionEnabled ? sequentialEncryptionStrategy : sequentialStrategy;
+		}
+	}
 }
