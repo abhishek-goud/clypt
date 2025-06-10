@@ -18,8 +18,8 @@ public class UploadStrategySelector {
 	@Autowired
 	private SequentialEncryptionStrategy sequentialEncryptionStrategy;
 
-	public UploadStrategy selectStrategy() {
-		return sequentialStrategy;
+	public UploadStrategy selectStrategy(int numberOfFiles) {
+		return encryptionEnabled ? sequentialEncryptionStrategy : sequentialStrategy;
 	}
 
 }
