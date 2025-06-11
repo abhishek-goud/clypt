@@ -3,3 +3,6 @@
 
 # Optional: Environment variables
 .env
+
+#
+*.zip
