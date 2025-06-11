@@ -97,13 +97,13 @@ program
             console.log(chalk.green(`✓ Download completed successfully`));
             console.log(chalk.white(`Location: `) + chalk.bold.cyan(outputPath));
             
-            try {
-               const res = await axios.get(`${ENDPOINT_URL}/filetype?code=${code}`);
-               const fileType = res.data || 'unknown';
-               console.log(chalk.white(`Type: `) + chalk.cyan(fileType));
-            } catch (e) {
-               console.log(chalk.dim('Type: unable to determine'));
-            }
+            // try {
+            //    const res = await axios.get(`${ENDPOINT_URL}/filetype?code=${code}`);
+            //    const fileType = res.data || 'unknown';
+            //    console.log(chalk.white(`Type: `) + chalk.cyan(fileType));
+            // } catch (e) {
+            //    console.log(chalk.dim('Type: unable to determine'));
+            // }
             
             console.log(chalk.dim(`Status: Ready for extraction`));
          });

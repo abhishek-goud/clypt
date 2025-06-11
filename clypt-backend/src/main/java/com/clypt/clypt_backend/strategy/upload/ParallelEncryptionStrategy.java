@@ -8,11 +8,13 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
 import com.clypt.clypt_backend.utils.EncryptionUtil;
 
+@Component
 public class ParallelEncryptionStrategy implements UploadStrategy {
 	private static final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
 

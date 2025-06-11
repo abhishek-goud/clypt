@@ -25,7 +25,7 @@ public class UploadStrategySelector {
 	private ParallelEncryptionStrategy parallelEncryptionStrategy;
 
 	public UploadStrategy selectStrategy(int numberOfFiles) {
-		if (numberOfFiles > parallelStrategyThreshold) {
+		if (numberOfFiles >= parallelStrategyThreshold) {
 			return encryptionEnabled ? parallelEncryptionStrategy : parallelStrategy;
 		} else {
 			return encryptionEnabled ? sequentialEncryptionStrategy : sequentialStrategy;

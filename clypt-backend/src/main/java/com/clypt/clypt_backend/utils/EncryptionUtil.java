@@ -56,6 +56,40 @@ public class EncryptionUtil {
 
 	}
 	
+	
+    /**
+     * Decrypts the given byte array (which contains both IV and ciphertext) using AES/GCM/NoPadding.
+     *
+     * @param encryptedData The byte array containing IV and ciphertext.
+     * @param secretKey     The decryption key (as byte array).
+     * @return The decrypted data (plaintext).
+     * @throws Exception If an error occurs during decryption.
+     */
+	public static byte[] decrypt(byte[] encryptedData, byte[] secretKey) throws Exception {
+	    // Extract IV using loop
+	    byte[] iv = new byte[IV_SIZE];
+	    for (int i = 0; i < IV_SIZE; i++) {
+	        iv[i] = encryptedData[i];
+	    }
+
+	    // Extract ciphertext using loop
+	    int cipherLength = encryptedData.length - IV_SIZE;
+	    byte[] ciphertext = new byte[cipherLength];
+	    for (int i = 0; i < cipherLength; i++) {
+	        ciphertext[i] = encryptedData[i + IV_SIZE];
+	    }
+
+	    // Initialize Cipher with AES/CBC/PKCS5Padding
+	    Cipher cipher = Cipher.getInstance(AES_CBC_PADDING);
+	    SecretKeySpec keySpec = new SecretKeySpec(secretKey, AES);
+	    IvParameterSpec ivSpec = new IvParameterSpec(iv);
+	    cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
+
+	    // Decrypt the ciphertext
+	    return cipher.doFinal(ciphertext);
+	}
+	
+	
 	/**
 	 * converts the unique code into a 128-bit AES encryption key.
 	 *
@@ -67,7 +101,7 @@ public class EncryptionUtil {
 	
 	public static byte[] generateKeyFromUniqueCode(String uniqueCode) throws NoSuchAlgorithmException {
         MessageDigest sha = MessageDigest.getInstance("SHA-256");
-        byte[] key = sha.digest(uniqueCode.getBytes()); //SHA-1 gives message digest of size 20bytes 
+        byte[] key = sha.digest(uniqueCode.getBytes()); //SHA-256 gives message digest of size 32bytes 
 
         byte[] aesKey = new byte[KEY_SIZE]; 
         for(int i = 0; i < KEY_SIZE; i++) //Taking first 16bytes of messageDigest
