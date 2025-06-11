@@ -9,7 +9,4 @@ public interface UploadStrategy {
 
 	List<String> uploadFiles(MultipartFile[] files, Path folderPath, String uniqueCode);
 	
-	String getFileExtension(String fileName);
-	
-	String getFileType();
 }

@@ -18,8 +18,6 @@ public class SequentialStrategy implements UploadStrategy {
 
 	private static final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
 
-	private String fileType = "";
-
 	public List<String> uploadFiles(MultipartFile[] files, Path folderPath, String uniqueCode){
 		List<String> fileUrls = new ArrayList<>();
 		
@@ -30,7 +28,7 @@ public class SequentialStrategy implements UploadStrategy {
 				if(fileNameWithExtension == null) {
 					throw new RuntimeException("Received a file without a valid name in the upload request.");
 				}
-				if(fileType.length() == 0) fileType = getFileExtension(fileNameWithExtension);
+			
 				
 				Path filePath = folderPath.resolve(fileNameWithExtension);
 				Files.write(filePath, file.getBytes());
@@ -44,22 +42,6 @@ public class SequentialStrategy implements UploadStrategy {
 			
 		}
 		return fileUrls;
-	}
-
-	// Helper method to extract file extension
-	public String getFileExtension(String filename) {
-		if (filename == null || filename.isEmpty()) {
-			return "";
-		}
-		int lastDotIndex = filename.lastIndexOf('.');
-		if (lastDotIndex == -1 || lastDotIndex == filename.length() - 1) {
-			return "";
-		}
-		return filename.substring(lastDotIndex); // includes the dot (e.g., ".pdf")
-	}
-	
-	public String getFileType() {
-		return fileType;
 	}
 
 }

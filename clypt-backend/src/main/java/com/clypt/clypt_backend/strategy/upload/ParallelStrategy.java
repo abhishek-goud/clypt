@@ -17,14 +17,11 @@ import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
 
 /**
  * ParallelStrategy stores the files using CompletableFuture to achieve a faster
- * parallel response.
  */
 
 @Component
 public class ParallelStrategy implements UploadStrategy {
 	private static final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
-
-	private String fileType = "";
 
 	public List<String> uploadFiles(MultipartFile files[], Path folderPath, String uniqueCode) {
 		List<CompletableFuture<String>> futures = new ArrayList<>();
@@ -37,8 +34,7 @@ public class ParallelStrategy implements UploadStrategy {
 					if (fileNameWithExtension == null) {
 						throw new RuntimeException("Received a file without a valid name in the upload request");
 					}
-					if (fileType.length() == 0)
-						fileType = getFileExtension(fileNameWithExtension);
+
 					Path filePath = folderPath.resolve(fileNameWithExtension);
 					Files.write(filePath, file.getBytes());
 					return filePath.toString();
@@ -68,21 +64,5 @@ public class ParallelStrategy implements UploadStrategy {
 
 		return savedPaths;
 
-	}
-
-	// Helper method to extract file extension
-	public String getFileExtension(String filename) {
-		if (filename == null || filename.isEmpty()) {
-			return "";
-		}
-		int lastDotIndex = filename.lastIndexOf('.');
-		if (lastDotIndex == -1 || lastDotIndex == filename.length() - 1) {
-			return "";
-		}
-		return filename.substring(lastDotIndex); // includes the dot (e.g., ".pdf")
-	}
-
-	public String getFileType() {
-		return fileType;
 	}
 }

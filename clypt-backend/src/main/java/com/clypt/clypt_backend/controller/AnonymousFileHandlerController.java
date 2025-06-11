@@ -63,7 +63,7 @@ public class AnonymousFileHandlerController {
 	
 	@PostMapping
 	public ResponseEntity<CodeResponse> uploadFile(@RequestParam("files") MultipartFile[] multipartFiles) {
-		log.info("API endpoint /ghost-drop/anonymous: Method:POST");
+		log.info("API endpoint /clypt/anonymous: Method:POST");
 		System.out.println("length- "+multipartFiles.length);
 	    
 		CodeResponse code = this.fileHandler.upload(multipartFiles, folderName);
@@ -75,7 +75,7 @@ public class AnonymousFileHandlerController {
 	
 	@GetMapping
 	public ResponseEntity<Resource> getFile(@RequestParam("code") String uniqueCode){
-		log.info("API endpoint /ghost-drop/anonymous: Method:GET");
+		log.info("API endpoint /clypt/anonymous: Method:GET");
 
         // retrieve the path to the zip file.
         Path zipFilePath = fileHandler.getFiles(uniqueCode);
@@ -105,8 +105,8 @@ public class AnonymousFileHandlerController {
 	}
 	
 	@GetMapping("filetype")
-	public ResponseEntity<String> getFileType(@RequestParam("code") String uniqueCode){
-		String fileType = fileHandler.getFileType(uniqueCode);
+	public ResponseEntity<List<String>> getFileType(@RequestParam("code") String uniqueCode){
+		List<String> fileType = fileHandler.getFileType(uniqueCode);
 		
 		return new ResponseEntity<>(fileType, HttpStatus.OK);
 		

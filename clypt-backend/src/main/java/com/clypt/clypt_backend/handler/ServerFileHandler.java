@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
@@ -42,7 +43,9 @@ public class ServerFileHandler implements FileHandler {
 	@Autowired
 	private UrlMappingService urlMappingService;
 
-	private static final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
+	private final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
+	
+	private UploadStrategy strategy;
 
 	@Override
 	public CodeResponse upload(MultipartFile[] multipartFiles, String folderName) {
@@ -55,12 +58,11 @@ public class ServerFileHandler implements FileHandler {
 			// create directories for the new files.
 			Files.createDirectories(folderPath);
 
-			UploadStrategy strategy = uploadStrategySelector.selectStrategy(multipartFiles.length);
+			strategy = uploadStrategySelector.selectStrategy(multipartFiles.length);
 			fileUrls = strategy.uploadFiles(multipartFiles, folderPath, uniqueCode);
-			String fileExtension = strategy.getFileType();
 
 			// save file URLs with the unique code.
-			urlMappingService.save(uniqueCode, fileUrls, fileExtension);
+			urlMappingService.save(uniqueCode, fileUrls, new ArrayList<>());
 
 			log.info("Uploaded from ServerFileHandler");
 			return new CodeResponse(uniqueCode);
@@ -149,9 +151,8 @@ public class ServerFileHandler implements FileHandler {
 	}
 
 	@Override
-	public String getFileType(String uniqueCode) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<String> getFileType(String uniqueCode) {
+		return new ArrayList<>();
 	}
 
 	private String generateUniqueCode() {

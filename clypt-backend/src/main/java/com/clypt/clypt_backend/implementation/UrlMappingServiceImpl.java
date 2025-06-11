@@ -17,13 +17,13 @@ public class UrlMappingServiceImpl implements UrlMappingService {
 	UrlMappingRepository mappingRepository;
 
 	@Override
-	public UrlMapping save(String uniqueCode, List<String> urls, String fileExtension) {
+	public UrlMapping save(String uniqueCode, List<String> urls, List<String> fileExtension) {
 		// TODO Auto-generated method stub
 		UrlMapping urlMapping = UrlMapping
 				.builder()
                 .uniqueCode(uniqueCode)
                 .urls(urls)
-                .fileExtension(fileExtension)
+                .fileType(fileExtension)
                 .expiryDate(LocalDateTime.now().plusMinutes(2))
                 .build();
 		

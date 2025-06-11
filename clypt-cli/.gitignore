@@ -4,5 +4,9 @@
 # Optional: Environment variables
 .env
 
-#
+# Ignore all .zip files
 *.zip
+
+# Ignore the "zip" folder
+/zip/
+

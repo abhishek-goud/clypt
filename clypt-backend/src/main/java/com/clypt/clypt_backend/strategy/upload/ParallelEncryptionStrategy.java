@@ -18,8 +18,6 @@ import com.clypt.clypt_backend.utils.EncryptionUtil;
 public class ParallelEncryptionStrategy implements UploadStrategy {
 	private static final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
 
-	private String fileType = "";
-
 	public List<String> uploadFiles(MultipartFile[] files, Path folderPath, String uniqueCode) {
 		byte[] secretKey;
 		try {
@@ -44,9 +42,6 @@ public class ParallelEncryptionStrategy implements UploadStrategy {
 						throw new RuntimeException("Received a file without a valid name in the upload request.");
 					}
 					
-					if (fileType.length() == 0)
-						fileType = getFileExtension(fileNameWithExtension);
-
 					Path filePath = folderPath.resolve(fileNameWithExtension);
 					Files.write(filePath, encryptedBytes);
 					return filePath.toString();
@@ -71,20 +66,5 @@ public class ParallelEncryptionStrategy implements UploadStrategy {
 
 	}
 
-	// Helper method to extract file extension
-	public String getFileExtension(String filename) {
-		if (filename == null || filename.isEmpty()) {
-			return "";
-		}
-		int lastDotIndex = filename.lastIndexOf('.');
-		if (lastDotIndex == -1 || lastDotIndex == filename.length() - 1) {
-			return "";
-		}
-		return filename.substring(lastDotIndex); // includes the dot (e.g., ".pdf")
-	}
-
-	public String getFileType() {
-		return fileType;
-	}
 
 }

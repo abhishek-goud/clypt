@@ -15,8 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
 
 /**
- * ParallelStrategy stores the files using CompletableFuture to achieve a faster
- * parallel response.
+ * ParallelStrategy stores the files using multi-threading to achieve a faster processing
+ * 
  */
 
 @Component

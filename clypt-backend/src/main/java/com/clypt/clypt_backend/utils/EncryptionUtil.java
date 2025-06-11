@@ -44,6 +44,7 @@ public class EncryptionUtil {
 
 		// combine IV and encrypted data into a single byte array
 		byte[] ivAndEncryptedData = new byte[IV_SIZE + encryptedData.length];
+		
 		// Copy IV
 		for (int i = 0; i < iv.length; i++)
 			ivAndEncryptedData[i] = iv[i];
@@ -58,7 +59,7 @@ public class EncryptionUtil {
 	
 	
     /**
-     * Decrypts the given byte array (which contains both IV and ciphertext) using AES/GCM/NoPadding.
+     * Decrypts the given byte array (which contains both IV and ciphertext) using AES/CBC/PKCS5Padding.
      *
      * @param encryptedData The byte array containing IV and ciphertext.
      * @param secretKey     The decryption key (as byte array).

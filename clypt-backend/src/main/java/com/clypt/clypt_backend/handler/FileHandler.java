@@ -28,5 +28,5 @@ public interface FileHandler {
      */
     Path getFiles(String uniqueCode);
     
-    String getFileType(String uniqueCode);
+    List<String> getFileType(String uniqueCode);
 }

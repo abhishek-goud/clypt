@@ -14,7 +14,7 @@ public interface UrlMappingService {
      * The save method takes a unique code and a list of urls. <br>
      * It stores the UrlMapping entity in the database.
      */
-    UrlMapping save(String uniqueCode, List<String> urls, String fileExtension);
+    UrlMapping save(String uniqueCode, List<String> urls, List<String> fileExtension);
 
     /**
      * The get method takes the unique code. <br>

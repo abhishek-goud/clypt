@@ -34,8 +34,9 @@ public class UrlMapping {
 	@CollectionTable(name = "url_list", joinColumns = @JoinColumn(name = "url_mapping_id"))
 	private List<String> urls;
 	
-	@Column(nullable = false)
-	private String fileExtension;
+	@ElementCollection
+	@CollectionTable(name = "file_type_list", joinColumns = @JoinColumn(name = "url_mapping_id"))
+	private List<String> fileType;
 	
 	@Column(nullable = false)
 	private LocalDateTime expiryDate;

@@ -58,13 +58,15 @@ public class CloudinaryFileHandler implements FileHandler {
 		List<String> fileUrls = new ArrayList<>();
 		String uniqueCode = generateUniqueCode();
 		String fileExtension = "";
+		List<String> fileType = new ArrayList<>();
 
 		try {
 			for (MultipartFile file : multipartFiles) {
 				String fileNameWithExtension = file.getOriginalFilename();
 				String fileNameWithoutExtension = getFileNameWithoutExtension(fileNameWithExtension);
-				if (fileExtension.length() == 0)
-					fileExtension = getFileExtension(fileNameWithExtension);
+//				if (fileExtension.length() == 0)
+//					fileExtension = getFileExtension(fileNameWithExtension);
+				fileType.add(getFileExtension(fileNameWithExtension));
 				utils.put("public_id", fileNameWithoutExtension + uniqueCode);
 
 				Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), utils);
@@ -76,8 +78,8 @@ public class CloudinaryFileHandler implements FileHandler {
 
 			}
 
-			urlMappingService.save(uniqueCode, fileUrls, fileExtension);
-			System.out.println("upload from CloudinaryFileHandler");
+			urlMappingService.save(uniqueCode, fileUrls, fileType);
+			System.out.println("upload from Cloudin;aryFileHandler");
 			return new CodeResponse(uniqueCode);
 
 		} catch (IOException e) {
@@ -114,7 +116,7 @@ public class CloudinaryFileHandler implements FileHandler {
 				e.printStackTrace();
 			}
 
-			System.out.println("delete from ServerFileHandler");
+			System.out.println("delete from cloudinaryFileHandler");
 		} catch (Exception e) {
 			log.error("\"Failed to delete files from Cloudinary:" + e);
 
@@ -192,9 +194,9 @@ public class CloudinaryFileHandler implements FileHandler {
 	}
 
 	@Override
-	public String getFileType(String uniqueCode) {
+	public List<String> getFileType(String uniqueCode) {
 		UrlMapping urlMapping = urlMappingService.get(uniqueCode);
-		return urlMapping.getFileExtension();
+		return urlMapping.getFileType();
 	}
 
 	// Helper method to extract file extension
