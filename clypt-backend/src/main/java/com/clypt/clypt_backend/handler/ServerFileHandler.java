@@ -23,6 +23,7 @@ import com.clypt.clypt_backend.entity.UrlMapping;
 import com.clypt.clypt_backend.io.Delete;
 import com.clypt.clypt_backend.responses.CodeResponse;
 import com.clypt.clypt_backend.services.UrlMappingService;
+import com.clypt.clypt_backend.strategy.delete.DeleteStrategy;
 import com.clypt.clypt_backend.strategy.upload.UploadStrategy;
 import com.clypt.clypt_backend.strategy.upload.UploadStrategySelector;
 import com.clypt.clypt_backend.utils.EncryptionUtil;
@@ -42,6 +43,9 @@ public class ServerFileHandler implements FileHandler {
 
 	@Autowired
 	private UrlMappingService urlMappingService;
+	
+	@Autowired
+	private DeleteStrategy deleteStrategy;
 
 	private final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
 	
@@ -77,7 +81,7 @@ public class ServerFileHandler implements FileHandler {
 	@Override
 	public void delete(String uniqueCode, List<String> fileUrls) {
 		try {
-			deleteService.deleteFiles(fileUrls);
+			deleteStrategy.deleteFiles(fileUrls);
 
 			// delete the uniqueCode directory.
 			Path codePath = Paths.get(BASE_DIRECTORY, "anonymous", uniqueCode);
