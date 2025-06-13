@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
 
-@Component
+
 public class SequentialDeleteStrategy implements DeleteStrategy{
 	private static final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
 
