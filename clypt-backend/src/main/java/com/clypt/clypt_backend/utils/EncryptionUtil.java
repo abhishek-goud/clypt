@@ -1,7 +1,6 @@
 package com.clypt.clypt_backend.utils;
 
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
@@ -100,7 +99,7 @@ public class EncryptionUtil {
 	 */
 
 	
-	public static byte[] generateKeyFromUniqueCode(String uniqueCode) throws NoSuchAlgorithmException {
+	public static byte[] generateKeyFromUniqueCode(String uniqueCode) throws Exception {
         MessageDigest sha = MessageDigest.getInstance("SHA-256");
         byte[] key = sha.digest(uniqueCode.getBytes()); //SHA-256 gives message digest of size 32bytes 
 

@@ -1,5 +1,6 @@
 package com.clypt.clypt_backend.handler;
 
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,20 +16,30 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
 import com.clypt.clypt_backend.entity.UrlMapping;
-import com.clypt.clypt_backend.io.Delete;
+import com.clypt.clypt_backend.exceptions.FileDeleteFailedException;
+import com.clypt.clypt_backend.exceptions.FileUploadFailedException;
+import com.clypt.clypt_backend.exceptions.TimeExpiredException;
 import com.clypt.clypt_backend.responses.CodeResponse;
 import com.clypt.clypt_backend.services.UrlMappingService;
 import com.clypt.clypt_backend.strategy.delete.DeleteStrategy;
+import com.clypt.clypt_backend.strategy.delete.DeleteStrategySelector;
 import com.clypt.clypt_backend.strategy.upload.UploadStrategy;
 import com.clypt.clypt_backend.strategy.upload.UploadStrategySelector;
 import com.clypt.clypt_backend.utils.EncryptionUtil;
 
-@Service
+import jakarta.persistence.EntityNotFoundException;
+
+
+/**
+ * ServerFileHandler stores files locally on the server and handles upload, retrieval, and deletion of files
+ */
+
+@Component
 @ConditionalOnProperty(name = "file.handler", havingValue = "server")
 public class ServerFileHandler implements FileHandler {
 
@@ -39,18 +50,14 @@ public class ServerFileHandler implements FileHandler {
 	private UploadStrategySelector uploadStrategySelector;
 
 	@Autowired
-	private Delete deleteService;
-
-	@Autowired
 	private UrlMappingService urlMappingService;
 	
 	@Autowired
-	private DeleteStrategy deleteStrategy;
+	private DeleteStrategySelector deleteStrategySelector;
 
 	private final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
 	
-	private UploadStrategy strategy;
-
+	
 	@Override
 	public CodeResponse upload(MultipartFile[] multipartFiles, String folderName) {
 		List<String> fileUrls;
@@ -62,7 +69,7 @@ public class ServerFileHandler implements FileHandler {
 			// create directories for the new files.
 			Files.createDirectories(folderPath);
 
-			strategy = uploadStrategySelector.selectStrategy(multipartFiles.length);
+			UploadStrategy strategy = uploadStrategySelector.selectStrategy(multipartFiles.length);
 			fileUrls = strategy.uploadFiles(multipartFiles, folderPath, uniqueCode);
 
 			// save file URLs with the unique code.
@@ -73,7 +80,7 @@ public class ServerFileHandler implements FileHandler {
 
 		} catch (Exception e) {
 			log.error("Failed to upload file from ServerFileHandler");
-			throw new RuntimeException("Failed to upload files");
+			throw new FileUploadFailedException("Failed to upload the files");
 		}
 
 	}
@@ -81,8 +88,10 @@ public class ServerFileHandler implements FileHandler {
 	@Override
 	public void delete(String uniqueCode, List<String> fileUrls) {
 		try {
-			deleteStrategy.deleteFiles(fileUrls);
-
+			DeleteStrategy strategy = deleteStrategySelector.selectStrategy(fileUrls.size());
+			
+			strategy.deleteFiles(fileUrls);
+			
 			// delete the uniqueCode directory.
 			Path codePath = Paths.get(BASE_DIRECTORY, "anonymous", uniqueCode);
 			Files.deleteIfExists(codePath);
@@ -93,7 +102,7 @@ public class ServerFileHandler implements FileHandler {
 			log.info("Deleted from ServerFileHandler");
 		} catch (Exception e) {
 			log.error("Failed to delete from ServerFileHandler");
-			throw new RuntimeException("Failed to delete files for code: " + uniqueCode);
+			 throw new FileDeleteFailedException("Failed to delete files for code: " + uniqueCode);
 		}
 
 	}
@@ -117,7 +126,7 @@ public class ServerFileHandler implements FileHandler {
 
 	        
 	        if (fileUrls == null || fileUrls.isEmpty()) {
-	            throw new RuntimeException("No files found for the provided code");
+	            throw new FileNotFoundException("No files found for the provided code");
 	        }
 
 	        //generate decryption key using the unique code
@@ -149,9 +158,11 @@ public class ServerFileHandler implements FileHandler {
 	        System.out.println("getFiles from ServerFileHandler");
 	        return zipFilePath;
 
-	    } catch (Exception e) {
-	        throw new RuntimeException("No files found for the code");
-	    }
+	    } catch (EntityNotFoundException | TimeExpiredException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new EntityNotFoundException("No files found for the code");
+        }
 	}
 
 	@Override

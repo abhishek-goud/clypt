@@ -15,15 +15,12 @@ import com.clypt.clypt_backend.handler.FileHandler;
 import com.clypt.clypt_backend.repository.UrlMappingRepository;
 
 import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
+
 
 /**
- * CleanUp service uses the cron job and cleans the expired urls and files. It
- * cleans both the cloud files and the database.
+ * CleanUp service uses a cron job to delete expired URLs and their associated files.
  */
-
 @Component
-@Slf4j
 public class UrlMappingCleanUpService {
 
 	@Autowired
@@ -38,12 +35,14 @@ public class UrlMappingCleanUpService {
 	@Transactional
 	public void deleteExpiredUrlMapping() {
 		log.info("Running Clean Up Service...");
-		List<UrlMapping> expiredUrlMapping = urlMappingRepository.findByExpiryDateBefore(LocalDateTime.now());
+		List<UrlMapping> expiredUrlMappings = urlMappingRepository.findByExpiryDateBefore(LocalDateTime.now());
 
-		for (UrlMapping urlMapping : expiredUrlMapping) {
+		for (UrlMapping urlMapping : expiredUrlMappings) {
 			fileHandler.delete(urlMapping.getUniqueCode(), urlMapping.getUrls());
 			urlMappingRepository.delete(urlMapping);
 		}
+		
+		log.warn("{} mappings have been cleaned!", expiredUrlMappings.size());
 	}
 
 }

@@ -1,6 +1,7 @@
 package com.clypt.clypt_backend.strategy.upload;
 
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,9 +15,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
+import com.clypt.clypt_backend.exceptions.FileUploadFailedException;
 
 /**
- * ParallelStrategy stores the files using CompletableFuture to achieve a faster
+ * ParallelStrategy uses multi-threading store files in parallel
  */
 
 @Component
@@ -32,7 +34,7 @@ public class ParallelStrategy implements UploadStrategy {
 				try {
 					String fileNameWithExtension = file.getOriginalFilename();
 					if (fileNameWithExtension == null) {
-						throw new RuntimeException("Received a file without a valid name in the upload request");
+						throw new FileNotFoundException("Received a file without a valid name in the upload request");
 					}
 
 					Path filePath = folderPath.resolve(fileNameWithExtension);
@@ -43,7 +45,7 @@ public class ParallelStrategy implements UploadStrategy {
 					log.error("{} error occurred", e.getClass());
 					log.error("message: {}", e.getMessage());
 
-					throw new RuntimeException("Failed to upload the files");
+					throw new FileUploadFailedException("Failed to upload the files");
 
 				}
 			});

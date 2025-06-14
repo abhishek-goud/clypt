@@ -12,6 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
+import com.clypt.clypt_backend.exceptions.FileDeleteFailedException;
+
+/**
+ * ParallelDeleteStrategy uses multi-threading to delete files in parallel.
+ */
 
 @Component
 public class ParallelDeleteStrategy implements DeleteStrategy {
@@ -30,7 +35,7 @@ public class ParallelDeleteStrategy implements DeleteStrategy {
 					log.error("{} error occurred", e.getClass());
 					log.error("message: {}", e.getMessage());
 
-					throw new RuntimeException("Failed to delete file");
+					throw new FileDeleteFailedException("Failed to delete file");
 				}
 			});
 

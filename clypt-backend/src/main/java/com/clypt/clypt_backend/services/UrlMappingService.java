@@ -5,8 +5,7 @@ import java.util.List;
 import com.clypt.clypt_backend.entity.UrlMapping;
 
 /**
- * UrlMappingService is the class associated to service the UrlMapping entity.
- *
+ * UrlMappingService is the class associated to service the UrlMapping entity
  */
 public interface UrlMappingService {
 

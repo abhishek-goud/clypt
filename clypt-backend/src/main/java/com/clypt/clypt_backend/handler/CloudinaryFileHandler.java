@@ -1,6 +1,7 @@
 package com.clypt.clypt_backend.handler;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -19,19 +20,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
 import com.clypt.clypt_backend.entity.UrlMapping;
+import com.clypt.clypt_backend.exceptions.FileDeleteFailedException;
+import com.clypt.clypt_backend.exceptions.TimeExpiredException;
 import com.clypt.clypt_backend.responses.CodeResponse;
 import com.clypt.clypt_backend.services.UrlMappingService;
 
-import lombok.extern.slf4j.Slf4j;
+import jakarta.persistence.EntityNotFoundException;
 
-@Service
+/**
+ * CloudinaryFileHandler stores files on the Cloudinary and handles upload, retrieval, and deletion of files
+ */
+
+@Component
 @ConditionalOnProperty(name = "file.handler", havingValue = "cloudinary")
 public class CloudinaryFileHandler implements FileHandler {
 
@@ -57,15 +64,13 @@ public class CloudinaryFileHandler implements FileHandler {
 		// list to store the uploaded files urls.
 		List<String> fileUrls = new ArrayList<>();
 		String uniqueCode = generateUniqueCode();
-		String fileExtension = "";
+		
 		List<String> fileType = new ArrayList<>();
 
 		try {
 			for (MultipartFile file : multipartFiles) {
 				String fileNameWithExtension = file.getOriginalFilename();
 				String fileNameWithoutExtension = getFileNameWithoutExtension(fileNameWithExtension);
-//				if (fileExtension.length() == 0)
-//					fileExtension = getFileExtension(fileNameWithExtension);
 				fileType.add(getFileExtension(fileNameWithExtension));
 				utils.put("public_id", fileNameWithoutExtension + uniqueCode);
 
@@ -79,7 +84,7 @@ public class CloudinaryFileHandler implements FileHandler {
 			}
 
 			urlMappingService.save(uniqueCode, fileUrls, fileType);
-			System.out.println("upload from Cloudin;aryFileHandler");
+			System.out.println("upload from CloudinaryFileHandler");
 			return new CodeResponse(uniqueCode);
 
 		} catch (IOException e) {
@@ -100,50 +105,40 @@ public class CloudinaryFileHandler implements FileHandler {
 				Map<Object, Object> result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
 
 				if (!("ok".equals(result.get("result")))) {
-					throw new Exception("Failed to delete file from Cloudinary: " + url);
+					throw new FileDeleteFailedException("Failed to delete file from Cloudinary: " + url);
 				}
 				log.info("File with url: {} deleted", url);
-				System.out.println("delete from CloudinaryFileHandler");
+				System.out.println("delete from cloudinaryFileHandler");
 			}
 
-			try {
-				// Fetch list of uploaded resources
-				Map result = cloudinary.api().resources(ObjectUtils.emptyMap());
-
-				// Print uploaded resources
-				System.out.println("cloudinary uploads " + result);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			System.out.println("delete from cloudinaryFileHandler");
 		} catch (Exception e) {
 			log.error("\"Failed to delete files from Cloudinary:" + e);
+			throw new FileDeleteFailedException("Failed to delete files from Cloundinary for code: " + uniqueCode);
 
 		}
 
 	}
-
+    
 	@Override
 	public Path getFiles(String uniqueCode) {
-		UrlMapping urlMapping = urlMappingService.get(uniqueCode);
-		List<String> fileUrls = urlMapping.getUrls();
-
-		if (fileUrls == null || fileUrls.isEmpty()) {
-			throw new RuntimeException("No files found for the provided code: " + uniqueCode);
-		}
 
 		try {
+			UrlMapping urlMapping = urlMappingService.get(uniqueCode);
+			List<String> fileUrls = urlMapping.getUrls();
+
+			if (fileUrls == null || fileUrls.isEmpty()) {
+				throw new FileNotFoundException("No files found for the provided code: " + uniqueCode);
+			}
+
 			Path tempZip = Files.createTempFile("clypt-", ".zip");
 			System.out.println("Created ZIP file at: " + tempZip.toAbsolutePath());
 
-			try (ZipOutputStream zos = new ZipOutputStream(
-					Files.newOutputStream(tempZip))) {
+			try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(tempZip))) {
 				for (String fileUrl : fileUrls) {
 					try {
 						System.out.println("Fetching: " + fileUrl);
 						URL url = new URL(fileUrl);
-						HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+						HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 						conn.setRequestMethod("GET");
 
 						int code = conn.getResponseCode();
@@ -172,9 +167,10 @@ public class CloudinaryFileHandler implements FileHandler {
 							System.out.println("Wrote " + totalBytes + " bytes to ZIP entry.");
 						}
 
+					} catch (EntityNotFoundException | TimeExpiredException e) {
+						throw e;
 					} catch (Exception e) {
-						System.err.println("Failed for URL: " + fileUrl);
-						e.printStackTrace();
+						throw new EntityNotFoundException("No files found for the code");
 					}
 				}
 			}

@@ -25,8 +25,11 @@ public interface UrlMappingRepository extends JpaRepository<UrlMapping, Long> {
     /**
      * findByExpiryDateBefore returns the list of UrlMappings that have expiry date less than now.
      */
-    @Query("SELECT u FROM url_mapping u WHERE u.expiryDate < :now")
-    List<UrlMapping> findByExpiryDateBefore(@Param("now") LocalDateTime now);
+//    @Query("SELECT u FROM url_mapping u WHERE u.expiryDate < :now")
+//    List<UrlMapping> findByExpiryDateBefore(@Param("now") LocalDateTime now);
+    
+    List<UrlMapping> findByExpiryDateBefore(LocalDateTime now);
+
 
 
 	

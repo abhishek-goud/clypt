@@ -10,8 +10,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.clypt.clypt_backend.controller.AnonymousFileHandlerController;
+import com.clypt.clypt_backend.exceptions.FileDeleteFailedException;
 
+/**
+ * SequentialDeleteStrategy deletes the files one by one
+ */
 
+@Component
 public class SequentialDeleteStrategy implements DeleteStrategy{
 	private static final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
 
@@ -28,7 +33,7 @@ public class SequentialDeleteStrategy implements DeleteStrategy{
 				log.error("{} error occured", e.getClass());
 				log.error("message: {}", e.getMessage());
 				
-				throw new RuntimeException("Failed to delete file");
+				throw new FileDeleteFailedException("Failed to delete the file!");
 			}
 		}
 		

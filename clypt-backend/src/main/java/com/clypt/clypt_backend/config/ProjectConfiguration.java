@@ -12,10 +12,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * ProjectConfiguration class is used to provide or inject bean configurations to different autowired attributes.
- * It primarily configures the Cloudinary service using values from the application properties file.
- *
+ * ProjectConfiguration provides bean definitions for dependency injection,
+ * including the configuration of the Cloudinary service with required credentials.
  */
+
+
 @Configuration
 public class ProjectConfiguration {
 
@@ -30,12 +31,11 @@ public class ProjectConfiguration {
     private String apiSecret;
 
     /**
-     * Creates and configures a Cloudinary bean that can be used throughout the application.
-     * The configuration includes the cloud name, API key, and API secret which are fetched
-     * from the application properties.
+     * Provides a configured Cloudinary bean for use throughout the application.
      *
-     * @return a configured Cloudinary object.
+     * @return a Cloudinary instance
      */
+
     @Bean
     public Cloudinary getCloudinary() {
         Map<Object, Object> config = new HashMap<>();
