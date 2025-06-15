@@ -2,7 +2,7 @@ package com.clypt.clypt_backend.config;
 
 import com.cloudinary.Cloudinary;
 
-import lombok.extern.java.Log;
+
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

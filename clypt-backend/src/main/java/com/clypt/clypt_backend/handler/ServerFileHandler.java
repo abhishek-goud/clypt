@@ -34,9 +34,9 @@ import com.clypt.clypt_backend.utils.EncryptionUtil;
 
 import jakarta.persistence.EntityNotFoundException;
 
-
 /**
- * ServerFileHandler stores files locally on the server and handles upload, retrieval, and deletion of files
+ * ServerFileHandler stores files locally on the server and handles upload,
+ * retrieval, and deletion of files
  */
 
 @Component
@@ -46,18 +46,20 @@ public class ServerFileHandler implements FileHandler {
 	@Value("${base.directory}")
 	private String BASE_DIRECTORY;
 
+	@Value("${encryption.enabled}")
+	private String isEncrypted;
+
 	@Autowired
 	private UploadStrategySelector uploadStrategySelector;
 
 	@Autowired
 	private UrlMappingService urlMappingService;
-	
+
 	@Autowired
 	private DeleteStrategySelector deleteStrategySelector;
 
 	private final Logger log = LoggerFactory.getLogger(AnonymousFileHandlerController.class);
-	
-	
+
 	@Override
 	public CodeResponse upload(MultipartFile[] multipartFiles, String folderName) {
 		List<String> fileUrls;
@@ -89,80 +91,84 @@ public class ServerFileHandler implements FileHandler {
 	public void delete(String uniqueCode, List<String> fileUrls) {
 		try {
 			DeleteStrategy strategy = deleteStrategySelector.selectStrategy(fileUrls.size());
-			
+
 			strategy.deleteFiles(fileUrls);
-			
+
 			// delete the uniqueCode directory.
 			Path codePath = Paths.get(BASE_DIRECTORY, "anonymous", uniqueCode);
 			Files.deleteIfExists(codePath);
-			
-		    //delete the zip file.
-            Path zipFilePath = Paths.get(BASE_DIRECTORY, uniqueCode + ".zip");
-            Files.deleteIfExists(zipFilePath);
+
+			// delete the zip file.
+			Path zipFilePath = Paths.get(BASE_DIRECTORY, uniqueCode + ".zip");
+			Files.deleteIfExists(zipFilePath);
 			log.info("Deleted from ServerFileHandler");
 		} catch (Exception e) {
 			log.error("Failed to delete from ServerFileHandler");
-			 throw new FileDeleteFailedException("Failed to delete files for code: " + uniqueCode);
+			throw new FileDeleteFailedException("Failed to delete files for code: " + uniqueCode);
 		}
 
 	}
 
 	@Override
 	public Path getFiles(String uniqueCode) {
-	    try {
-	    	
-	        // path where the zip file will be saved
-	        Path zipFilePath = Paths.get(BASE_DIRECTORY, uniqueCode + ".zip");
+		try {
+			UrlMapping urlMapping = urlMappingService.get(uniqueCode);
+			List<String> fileUrls = urlMapping.getUrls();
 
-	        //check if zip file exist
-	        if (Files.exists(zipFilePath)) {
-	            log.info("Zip file already exists for code {}", uniqueCode);
-	            return zipFilePath;
-	        }
+			if (fileUrls == null || fileUrls.isEmpty()) {
+				throw new FileNotFoundException("No files found for the provided code");
+			}
+			
+			// path where the zip file will be saved
+			Path zipFilePath = Paths.get(BASE_DIRECTORY, uniqueCode + ".zip");
 
-	      
-	        UrlMapping urlMapping = urlMappingService.get(uniqueCode);
-	        List<String> fileUrls = urlMapping.getUrls();
+			// check if zip file exist
+			if (Files.exists(zipFilePath)) {
+				log.info("Zip file already exists for code {}", uniqueCode);
+				return zipFilePath;
+			}
 
-	        
-	        if (fileUrls == null || fileUrls.isEmpty()) {
-	            throw new FileNotFoundException("No files found for the provided code");
-	        }
+			// generate decryption key using the unique code
+			byte[] secretKey = EncryptionUtil.generateKeyFromUniqueCode(uniqueCode);
 
-	        //generate decryption key using the unique code
-	        byte[] secretKey = EncryptionUtil.generateKeyFromUniqueCode(uniqueCode);
+			// create the zip file in the base directory
+			try (FileOutputStream fos = new FileOutputStream(zipFilePath.toFile());
+					ZipOutputStream zipOut = new ZipOutputStream(fos)) {
 
-	        // create the zip file in the base directory
-	        try (FileOutputStream fos = new FileOutputStream(zipFilePath.toFile());
-	             ZipOutputStream zipOut = new ZipOutputStream(fos)) {
+				// Loop through each fileUrl
+				for (String fileUrl : fileUrls) {
 
-	            // Loop through each fileUrl
-	            for (String fileUrl : fileUrls) {
+					Path filePath = Paths.get(fileUrl);
 
-	                Path filePath = Paths.get(fileUrl);
+					byte[] fileBytes;
 
-	                // Read the encrypted file data as bytes
-	                byte[] encryptedFileBytes = Files.readAllBytes(filePath);
-	                // Decrypt the file bytes
-	                byte[] decryptedBytes = EncryptionUtil.decrypt(encryptedFileBytes, secretKey);
+					if (isEncrypted.equals("true")) {
+						// Read and decrypt the file bytes
+						byte[] encryptedFileBytes = Files.readAllBytes(filePath);
+						fileBytes = EncryptionUtil.decrypt(encryptedFileBytes, secretKey);
+					} else {
+						// Read the raw file bytes
+						fileBytes = Files.readAllBytes(filePath);
+					}
 
-	                // Add the decrypted file to the zip
-	                ZipEntry zipEntry = new ZipEntry(filePath.getFileName().toString());
-	                zipOut.putNextEntry(zipEntry);
-	                zipOut.write(decryptedBytes);
-	                zipOut.closeEntry();
-	            }
-	        }
+					// Add the file to the zip
+					ZipEntry zipEntry = new ZipEntry(filePath.getFileName().toString());
+					zipOut.putNextEntry(zipEntry);
+					zipOut.write(fileBytes);
+					zipOut.closeEntry();
 
-	        log.info("Zip file created for code {}", uniqueCode);
-	        System.out.println("getFiles from ServerFileHandler");
-	        return zipFilePath;
+				}
+			}
 
-	    } catch (EntityNotFoundException | TimeExpiredException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new EntityNotFoundException("No files found for the code");
-        }
+			log.info("Zip file created for code {}", uniqueCode);
+			System.out.println("getFiles from ServerFileHandler");
+			return zipFilePath;
+
+		} catch (EntityNotFoundException | TimeExpiredException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new EntityNotFoundException("No files found for the provided code");
+		}
 	}
 
 	@Override

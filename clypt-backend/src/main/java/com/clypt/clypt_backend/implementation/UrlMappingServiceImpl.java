@@ -25,7 +25,7 @@ public class UrlMappingServiceImpl implements UrlMappingService {
 	public UrlMapping save(String uniqueCode, List<String> urls, List<String> fileExtension) {
 		// TODO Auto-generated method stub
 		UrlMapping urlMapping = UrlMapping.builder().uniqueCode(uniqueCode).urls(urls).fileType(fileExtension)
-				.expiryDate(LocalDateTime.now().plusMinutes(2)).build();
+				.expiryDate(LocalDateTime.now().plusHours(18)).build();
 
 		UrlMapping savedUrlMapping = mappingRepository.save(urlMapping);
 		return savedUrlMapping;
