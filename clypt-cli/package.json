@@ -1,9 +1,9 @@
 {
   "name": "clypt",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "Clypt — CLI tool for anonymous, secure file storage.",
   "license": "ISC",
-  "author": "Abhishek Goud",
+  "author": "akg.dev",
   "type": "commonjs",
   "main": "clypt-cli.js",
   "bin": {

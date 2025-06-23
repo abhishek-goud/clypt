@@ -8,7 +8,7 @@ const path = require("path");
 const chalk = require("chalk");
 
 const program = new Command();
-const ENDPOINT_URL = "http://localhost:8080/api/clypt/anonymous";
+const ENDPOINT_URL = "https://clypt.onrender.com/api/clypt/anonymous";
 const spinner = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]; // Loading animation frames
 const clearSpinner = () => process.stdout.write("\r\x1b[K"); // Clear current line
 const logHeader = (action, target) => {
@@ -59,7 +59,7 @@ program
       console.log(
         chalk.white(`Code: `) + chalk.bold.cyan(response.data.uniqueCode)
       );
-      console.log(chalk.dim(`Expires: 24 hours`));
+      console.log(chalk.dim(`Expires: 18 hours`));
     } catch (error) {
       clearInterval(uploadInterval);
       clearSpinner();
